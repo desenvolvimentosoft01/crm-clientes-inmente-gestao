@@ -23,7 +23,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const senhaValida = await bcrypt.compare(senha, usuario.senhaHash);
         if (!senhaValida) return null;
 
-        return { id: usuario.id, name: usuario.nome, email: usuario.email };
+        return { id: String(usuario.id), name: usuario.nome, email: usuario.email };
       },
     }),
   ],

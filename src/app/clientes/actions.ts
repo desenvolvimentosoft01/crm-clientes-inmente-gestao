@@ -2,13 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { Prisma, type StatusCliente } from "@prisma/client";
+import { Prisma, type ModuloSistema, type PlanoContrato, type StatusCliente } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 function parseFormData(formData: FormData) {
   const valorMensal = String(formData.get("valor_mensal") ?? "").trim();
   const dataInicio = String(formData.get("data_inicio") ?? "").trim();
+  const plano = String(formData.get("plano") ?? "").trim();
 
   return {
     nome: String(formData.get("nome") ?? "").trim(),
@@ -16,9 +17,10 @@ function parseFormData(formData: FormData) {
     contatoNome: String(formData.get("contato_nome") ?? "").trim() || null,
     contatoTelefone: String(formData.get("contato_telefone") ?? "").trim() || null,
     contatoEmail: String(formData.get("contato_email") ?? "").trim() || null,
-    plano: String(formData.get("plano") ?? "").trim() || null,
+    plano: (plano || null) as PlanoContrato | null,
     valorMensal: valorMensal ? new Prisma.Decimal(valorMensal) : null,
     status: String(formData.get("status") ?? "ativo") as StatusCliente,
+    modulos: formData.getAll("modulos") as ModuloSistema[],
     dataInicio: dataInicio ? new Date(dataInicio) : null,
     observacoes: String(formData.get("observacoes") ?? "").trim() || null,
   };
@@ -29,7 +31,10 @@ export async function criarCliente(formData: FormData) {
   const dados = parseFormData(formData);
 
   const cliente = await prisma.cliente.create({
-    data: { ...dados, criadoPorId: session?.user?.id },
+    data: {
+      ...dados,
+      criadoPorId: session?.user?.id ? Number(session.user.id) : null,
+    },
   });
 
   revalidatePath("/clientes");
@@ -39,7 +44,7 @@ export async function criarCliente(formData: FormData) {
 export async function atualizarCliente(clienteId: string, formData: FormData) {
   const dados = parseFormData(formData);
 
-  await prisma.cliente.update({ where: { id: clienteId }, data: dados });
+  await prisma.cliente.update({ where: { id: Number(clienteId) }, data: dados });
 
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${clienteId}`);
@@ -52,7 +57,11 @@ export async function adicionarInteracao(clienteId: string, formData: FormData) 
 
   if (descricao) {
     await prisma.interacao.create({
-      data: { clienteId, descricao, autorId: session?.user?.id },
+      data: {
+        clienteId: Number(clienteId),
+        descricao,
+        autorId: session?.user?.id ? Number(session.user.id) : null,
+      },
     });
     revalidatePath(`/clientes/${clienteId}`);
   }

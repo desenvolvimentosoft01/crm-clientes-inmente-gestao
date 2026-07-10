@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { ClienteForm } from "@/components/ClienteForm";
+import { ClienteView } from "@/components/ClienteView";
+import { StatusBadge } from "@/components/StatusBadge";
+import { LinkBotao } from "@/components/Botao";
 import { atualizarCliente, adicionarInteracao } from "@/app/clientes/actions";
 
 export default async function ClienteDetalhePage({
@@ -8,16 +11,19 @@ export default async function ClienteDetalhePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; editar?: string }>;
 }) {
   const { id } = await params;
-  const { erro } = await searchParams;
+  const { erro, editar } = await searchParams;
+  const emEdicao = editar === "1";
+  const clienteIdNumerico = Number(id);
+  if (!Number.isInteger(clienteIdNumerico)) notFound();
 
-  const cliente = await prisma.cliente.findUnique({ where: { id } });
+  const cliente = await prisma.cliente.findUnique({ where: { id: clienteIdNumerico } });
   if (!cliente) notFound();
 
   const interacoes = await prisma.interacao.findMany({
-    where: { clienteId: id },
+    where: { clienteId: clienteIdNumerico },
     orderBy: { criadoEm: "desc" },
     select: { id: true, descricao: true, criadoEm: true },
   });
@@ -26,37 +32,60 @@ export default async function ClienteDetalhePage({
   const adicionarInteracaoComId = adicionarInteracao.bind(null, id);
 
   return (
-    <div className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-6">
-      <h1 className="text-xl font-semibold">{cliente.nome}</h1>
+    <div className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      <div>
+        <LinkBotao href="/clientes" variante="fantasma" className="mb-3 px-0">
+          ← Voltar para clientes
+        </LinkBotao>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold">{cliente.nome}</h1>
+          {!emEdicao && <StatusBadge status={cliente.status} />}
+        </div>
+      </div>
 
       {erro && (
-        <p className="rounded bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
+        <p className="rounded-lg bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
           {erro}
         </p>
       )}
 
-      <ClienteForm cliente={cliente} action={atualizarComId} />
+      <section className="rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-neutral-900">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Dados do cliente</h2>
+          {!emEdicao && (
+            <LinkBotao href={`/clientes/${id}?editar=1`} variante="secundario">
+              Editar
+            </LinkBotao>
+          )}
+        </div>
 
-      <section className="space-y-4">
-        <h2 className="text-lg font-semibold">Histórico de interações</h2>
+        {emEdicao ? (
+          <ClienteForm cliente={cliente} action={atualizarComId} cancelarHref={`/clientes/${id}`} />
+        ) : (
+          <ClienteView cliente={cliente} />
+        )}
+      </section>
 
-        <form action={adicionarInteracaoComId} className="space-y-2">
+      <section className="rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-neutral-900">
+        <h2 className="mb-4 text-lg font-semibold">Histórico de interações</h2>
+
+        <form action={adicionarInteracaoComId} className="mb-5 space-y-2">
           <textarea
             name="descricao"
             required
             rows={3}
             placeholder="Registre uma ligação, e-mail, reunião..."
-            className="w-full rounded border border-black/15 px-3 py-2 text-sm dark:border-white/15 dark:bg-transparent"
+            className="w-full rounded-lg border border-black/15 px-3 py-2 text-sm dark:border-white/15 dark:bg-transparent"
           />
           <button
             type="submit"
-            className="rounded border border-black/15 px-4 py-2 text-sm dark:border-white/15"
+            className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
           >
             Adicionar interação
           </button>
         </form>
 
-        <div className="divide-y divide-black/10 rounded border border-black/10 dark:divide-white/10 dark:border-white/10">
+        <div className="divide-y divide-black/10 rounded-lg border border-black/10 dark:divide-white/10 dark:border-white/10">
           {interacoes.length === 0 && (
             <p className="p-4 text-sm text-black/60 dark:text-white/60">
               Nenhuma interação registrada ainda.
