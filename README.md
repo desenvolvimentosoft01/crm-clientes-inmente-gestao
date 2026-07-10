@@ -1,36 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CRM In Mente
 
-## Getting Started
+Painel interno para gestão dos clientes que utilizam o sistema **In Mente Gestão**: cadastro, plano contratado, status (ativo, em implantação, inadimplente, cancelado) e histórico de interações. Não é um funil de vendas/leads, apenas gestão pós-venda dos clientes já ativos.
 
-First, run the development server:
+## Stack
+- Next.js (App Router) + TypeScript + Tailwind
+- Supabase (Postgres + Auth) — mesma abordagem usada no In Mente Gestão
+
+## Setup
+
+1. Crie um projeto no [Supabase](https://supabase.com) (ou use um existente).
+2. Rode a migration em `supabase/migrations/0001_init.sql` no SQL Editor do projeto.
+3. Crie usuários da equipe em Authentication → Users (login por e-mail/senha).
+4. Copie `.env.example` para `.env.local` e preencha com a URL e a anon key do projeto Supabase.
+5. Instale as dependências e rode:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Acesse http://localhost:3000 — você será redirecionado para `/login`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Estrutura
+- `src/app/login` — autenticação
+- `src/app/clientes` — listagem, cadastro, edição e histórico de interações de clientes
+- `src/lib/supabase` — clientes Supabase (browser, server, middleware)
+- `supabase/migrations` — schema do banco (tabelas `clientes` e `interacoes`, com RLS)
