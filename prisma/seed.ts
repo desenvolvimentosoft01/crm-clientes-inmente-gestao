@@ -12,11 +12,11 @@ async function main() {
 
   const usuario = await prisma.usuario.upsert({
     where: { email },
-    update: {},
+    update: { senhaHash, nome },
     create: { nome, email, senhaHash },
   });
 
-  console.log(`Usuário pronto: ${usuario.email} (senha: ${senha} se recém-criado)`);
+  console.log(`Usuário pronto: ${usuario.email} (senha atualizada para: ${senha})`);
 }
 
 main()
