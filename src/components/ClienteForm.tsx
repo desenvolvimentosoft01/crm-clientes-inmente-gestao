@@ -1,5 +1,5 @@
 import { STATUS_OPCOES } from "@/components/StatusBadge";
-import type { Cliente } from "@/types/database";
+import type { Cliente } from "@prisma/client";
 
 export function ClienteForm({
   cliente,
@@ -8,25 +8,29 @@ export function ClienteForm({
   cliente?: Cliente;
   action: (formData: FormData) => void;
 }) {
+  const dataInicio = cliente?.dataInicio
+    ? cliente.dataInicio.toISOString().slice(0, 10)
+    : "";
+
   return (
     <form action={action} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <Campo label="Nome" name="nome" required defaultValue={cliente?.nome} />
-      <Campo label="Link do site" name="link_site" defaultValue={cliente?.link_site ?? ""} />
+      <Campo label="Link do site" name="link_site" defaultValue={cliente?.linkSite ?? ""} />
       <Campo
         label="Nome do contato"
         name="contato_nome"
-        defaultValue={cliente?.contato_nome ?? ""}
+        defaultValue={cliente?.contatoNome ?? ""}
       />
       <Campo
         label="Telefone do contato"
         name="contato_telefone"
-        defaultValue={cliente?.contato_telefone ?? ""}
+        defaultValue={cliente?.contatoTelefone ?? ""}
       />
       <Campo
         label="E-mail do contato"
         name="contato_email"
         type="email"
-        defaultValue={cliente?.contato_email ?? ""}
+        defaultValue={cliente?.contatoEmail ?? ""}
       />
       <Campo label="Plano contratado" name="plano" defaultValue={cliente?.plano ?? ""} />
       <Campo
@@ -34,13 +38,13 @@ export function ClienteForm({
         name="valor_mensal"
         type="number"
         step="0.01"
-        defaultValue={cliente?.valor_mensal ?? ""}
+        defaultValue={cliente?.valorMensal?.toString() ?? ""}
       />
       <Campo
         label="Data de início"
         name="data_inicio"
         type="date"
-        defaultValue={cliente?.data_inicio ?? ""}
+        defaultValue={dataInicio}
       />
 
       <div className="space-y-1">

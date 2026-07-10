@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatusCliente {
+  ativo
+  em_implantacao
+  inadimplente
+  cancelado
+}
+
+model Usuario {
+  id        String   @id @default(cuid())
+  nome      String
+  email     String   @unique
+  senhaHash String   @map("senha_hash")
+  criadoEm  DateTime @default(now()) @map("criado_em")
+
+  clientesCriados Cliente[]   @relation("ClienteCriadoPor")
+  interacoes      Interacao[] @relation("InteracaoAutor")
+
+  @@map("usuarios")
+}
+
+model Cliente {
+  id               String        @id @default(cuid())
+  nome             String
+  linkSite         String?       @map("link_site")
+  contatoNome      String?       @map("contato_nome")
+  contatoTelefone  String?       @map("contato_telefone")
+  contatoEmail     String?       @map("contato_email")
+  plano            String?
+  valorMensal      Decimal?      @map("valor_mensal") @db.Decimal(10, 2)
+  status           StatusCliente @default(ativo)
+  dataInicio       DateTime?     @map("data_inicio") @db.Date
+  observacoes      String?
+  criadoPorId      String?       @map("criado_por")
+  criadoEm         DateTime      @default(now()) @map("criado_em")
+  atualizadoEm     DateTime      @updatedAt @map("atualizado_em")
+
+  criadoPor  Usuario?    @relation("ClienteCriadoPor", fields: [criadoPorId], references: [id])
+  interacoes Interacao[]
+
+  @@map("clientes")
+}
+
+model Interacao {
+  id         String   @id @default(cuid())
+  clienteId  String   @map("cliente_id")
+  descricao  String
+  autorId    String?  @map("autor_id")
+  criadoEm   DateTime @default(now()) @map("criado_em")
+
+  cliente Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  autor   Usuario? @relation("InteracaoAutor", fields: [autorId], references: [id])
+
+  @@index([clienteId])
+  @@map("interacoes")
+}

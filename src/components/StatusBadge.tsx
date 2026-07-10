@@ -1,4 +1,4 @@
-import type { StatusCliente } from "@/types/database";
+import type { StatusCliente } from "@prisma/client";
 
 const ESTILOS: Record<StatusCliente, string> = {
   ativo: "bg-green-500/10 text-green-700 dark:text-green-400",

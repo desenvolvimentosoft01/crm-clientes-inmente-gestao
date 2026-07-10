@@ -2,60 +2,44 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import type { ClienteInsert, ClienteUpdate, InteracaoInsert, StatusCliente } from "@/types/database";
+import { Prisma, type StatusCliente } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
-function parseFormData(formData: FormData): Omit<ClienteInsert, "criado_por"> {
+function parseFormData(formData: FormData) {
   const valorMensal = String(formData.get("valor_mensal") ?? "").trim();
   const dataInicio = String(formData.get("data_inicio") ?? "").trim();
 
   return {
     nome: String(formData.get("nome") ?? "").trim(),
-    link_site: String(formData.get("link_site") ?? "").trim() || null,
-    contato_nome: String(formData.get("contato_nome") ?? "").trim() || null,
-    contato_telefone: String(formData.get("contato_telefone") ?? "").trim() || null,
-    contato_email: String(formData.get("contato_email") ?? "").trim() || null,
+    linkSite: String(formData.get("link_site") ?? "").trim() || null,
+    contatoNome: String(formData.get("contato_nome") ?? "").trim() || null,
+    contatoTelefone: String(formData.get("contato_telefone") ?? "").trim() || null,
+    contatoEmail: String(formData.get("contato_email") ?? "").trim() || null,
     plano: String(formData.get("plano") ?? "").trim() || null,
-    valor_mensal: valorMensal ? Number(valorMensal) : null,
+    valorMensal: valorMensal ? new Prisma.Decimal(valorMensal) : null,
     status: String(formData.get("status") ?? "ativo") as StatusCliente,
-    data_inicio: dataInicio || null,
+    dataInicio: dataInicio ? new Date(dataInicio) : null,
     observacoes: String(formData.get("observacoes") ?? "").trim() || null,
   };
 }
 
 export async function criarCliente(formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const session = await auth();
   const dados = parseFormData(formData);
-  const dadosInsert: ClienteInsert = { ...dados, criado_por: user?.id };
 
-  const { data: cliente, error } = await supabase
-    .from("clientes")
-    .insert(dadosInsert)
-    .select("id")
-    .single();
-
-  if (error) {
-    redirect(`/clientes/novo?erro=${encodeURIComponent(error.message)}`);
-  }
+  const cliente = await prisma.cliente.create({
+    data: { ...dados, criadoPorId: session?.user?.id },
+  });
 
   revalidatePath("/clientes");
   redirect(`/clientes/${cliente.id}`);
 }
 
 export async function atualizarCliente(clienteId: string, formData: FormData) {
-  const supabase = await createClient();
   const dados = parseFormData(formData);
-  const dadosUpdate: ClienteUpdate = { ...dados };
 
-  const { error } = await supabase.from("clientes").update(dadosUpdate).eq("id", clienteId);
-
-  if (error) {
-    redirect(`/clientes/${clienteId}?erro=${encodeURIComponent(error.message)}`);
-  }
+  await prisma.cliente.update({ where: { id: clienteId }, data: dados });
 
   revalidatePath("/clientes");
   revalidatePath(`/clientes/${clienteId}`);
@@ -63,24 +47,15 @@ export async function atualizarCliente(clienteId: string, formData: FormData) {
 }
 
 export async function adicionarInteracao(clienteId: string, formData: FormData) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const session = await auth();
   const descricao = String(formData.get("descricao") ?? "").trim();
-  if (!descricao) {
-    redirect(`/clientes/${clienteId}`);
+
+  if (descricao) {
+    await prisma.interacao.create({
+      data: { clienteId, descricao, autorId: session?.user?.id },
+    });
+    revalidatePath(`/clientes/${clienteId}`);
   }
 
-  const novaInteracao: InteracaoInsert = { cliente_id: clienteId, descricao, autor_id: user?.id };
-
-  const { error } = await supabase.from("interacoes").insert(novaInteracao);
-
-  if (error) {
-    redirect(`/clientes/${clienteId}?erro=${encodeURIComponent(error.message)}`);
-  }
-
-  revalidatePath(`/clientes/${clienteId}`);
   redirect(`/clientes/${clienteId}`);
 }

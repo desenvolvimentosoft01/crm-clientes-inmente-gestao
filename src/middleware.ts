@@ -1,9 +1,26 @@
-import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 
-export async function middleware(request: NextRequest) {
-  return updateSession(request);
-}
+export default auth((req) => {
+  const isLoginRoute = req.nextUrl.pathname.startsWith("/login");
+  const isApiAuthRoute = req.nextUrl.pathname.startsWith("/api/auth");
+
+  if (isApiAuthRoute) return NextResponse.next();
+
+  if (!req.auth && !isLoginRoute) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
+  }
+
+  if (req.auth && isLoginRoute) {
+    const url = req.nextUrl.clone();
+    url.pathname = "/clientes";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],

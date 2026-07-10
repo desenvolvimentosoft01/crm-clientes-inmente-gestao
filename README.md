@@ -4,25 +4,38 @@ Painel interno para gestão dos clientes que utilizam o sistema **In Mente Gest�
 
 ## Stack
 - Next.js (App Router) + TypeScript + Tailwind
-- Supabase (Postgres + Auth) — mesma abordagem usada no In Mente Gestão
+- PostgreSQL local + Prisma ORM
+- Auth.js (Credentials) para login da equipe
 
 ## Setup
 
-1. Crie um projeto no [Supabase](https://supabase.com) (ou use um existente).
-2. Rode a migration em `supabase/migrations/0001_init.sql` no SQL Editor do projeto.
-3. Crie usuários da equipe em Authentication → Users (login por e-mail/senha).
-4. Copie `.env.example` para `.env.local` e preencha com a URL e a anon key do projeto Supabase.
-5. Instale as dependências e rode:
+1. Tenha um Postgres rodando localmente e crie um banco (ex.: `crm-clientes-inmente`).
+2. Copie `.env.example` para `.env` e preencha `DATABASE_URL` com a connection string do seu Postgres e `AUTH_SECRET` com um valor aleatório (`openssl rand -base64 32` ou `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`).
+3. Instale as dependências e aplique as migrations:
 
 ```bash
 npm install
+npx prisma migrate deploy
+```
+
+4. Crie o primeiro usuário da equipe (login: `admin@inmente.com.br` / senha: `mudar123` por padrão — troque via variáveis de ambiente `SEED_USER_EMAIL`, `SEED_USER_SENHA`, `SEED_USER_NOME` antes de rodar):
+
+```bash
+npm run seed
+```
+
+5. Rode o projeto:
+
+```bash
 npm run dev
 ```
 
 Acesse http://localhost:3000 — você será redirecionado para `/login`.
 
 ## Estrutura
-- `src/app/login` — autenticação
+- `src/app/login` — autenticação (Auth.js Credentials)
 - `src/app/clientes` — listagem, cadastro, edição e histórico de interações de clientes
-- `src/lib/supabase` — clientes Supabase (browser, server, middleware)
-- `supabase/migrations` — schema do banco (tabelas `clientes` e `interacoes`, com RLS)
+- `src/auth.ts` — configuração do Auth.js
+- `src/lib/prisma.ts` — client Prisma
+- `prisma/schema.prisma` — modelos `Usuario`, `Cliente`, `Interacao`
+- `prisma/seed.ts` — script para criar o primeiro usuário

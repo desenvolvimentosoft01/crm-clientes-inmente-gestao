@@ -1,12 +1,7 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/StatusBadge";
-import type { Cliente, StatusCliente } from "@/types/database";
-
-type ClienteResumo = Pick<
-  Cliente,
-  "id" | "nome" | "link_site" | "plano" | "valor_mensal" | "status"
->;
+import type { StatusCliente } from "@prisma/client";
 
 export default async function ClientesPage({
   searchParams,
@@ -14,21 +9,15 @@ export default async function ClientesPage({
   searchParams: Promise<{ busca?: string; status?: StatusCliente }>;
 }) {
   const { busca, status } = await searchParams;
-  const supabase = await createClient();
 
-  let query = supabase
-    .from("clientes")
-    .select("id, nome, link_site, plano, valor_mensal, status")
-    .order("nome");
-
-  if (busca) {
-    query = query.ilike("nome", `%${busca}%`);
-  }
-  if (status) {
-    query = query.eq("status", status);
-  }
-
-  const { data: clientes, error } = await query.returns<ClienteResumo[]>();
+  const clientes = await prisma.cliente.findMany({
+    where: {
+      ...(busca ? { nome: { contains: busca, mode: "insensitive" as const } } : {}),
+      ...(status ? { status } : {}),
+    },
+    orderBy: { nome: "asc" },
+    select: { id: true, nome: true, plano: true, valorMensal: true, status: true },
+  });
 
   return (
     <div className="mx-auto w-full max-w-4xl flex-1 p-6">
@@ -69,19 +58,13 @@ export default async function ClientesPage({
         </button>
       </form>
 
-      {error && (
-        <p className="rounded bg-red-500/10 p-3 text-sm text-red-600 dark:text-red-400">
-          Erro ao carregar clientes: {error.message}
-        </p>
-      )}
-
       <div className="divide-y divide-black/10 rounded border border-black/10 dark:divide-white/10 dark:border-white/10">
-        {clientes?.length === 0 && (
+        {clientes.length === 0 && (
           <p className="p-4 text-sm text-black/60 dark:text-white/60">
             Nenhum cliente encontrado.
           </p>
         )}
-        {clientes?.map((cliente) => (
+        {clientes.map((cliente) => (
           <Link
             key={cliente.id}
             href={`/clientes/${cliente.id}`}
@@ -91,8 +74,8 @@ export default async function ClientesPage({
               <p className="font-medium">{cliente.nome}</p>
               <p className="text-black/60 dark:text-white/60">
                 {cliente.plano ?? "Sem plano"}
-                {cliente.valor_mensal
-                  ? ` · R$ ${cliente.valor_mensal.toFixed(2)}/mês`
+                {cliente.valorMensal
+                  ? ` · R$ ${cliente.valorMensal.toFixed(2)}/mês`
                   : ""}
               </p>
             </div>

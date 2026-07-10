@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { prisma } from "@/lib/prisma";
 import { ClienteForm } from "@/components/ClienteForm";
 import { atualizarCliente, adicionarInteracao } from "@/app/clientes/actions";
-import type { Cliente, Interacao } from "@/types/database";
 
 export default async function ClienteDetalhePage({
   params,
@@ -13,23 +12,15 @@ export default async function ClienteDetalhePage({
 }) {
   const { id } = await params;
   const { erro } = await searchParams;
-  const supabase = await createClient();
 
-  const { data: cliente } = await supabase
-    .from("clientes")
-    .select("*")
-    .eq("id", id)
-    .returns<Cliente[]>()
-    .single();
-
+  const cliente = await prisma.cliente.findUnique({ where: { id } });
   if (!cliente) notFound();
 
-  const { data: interacoes } = await supabase
-    .from("interacoes")
-    .select("id, descricao, criado_em")
-    .eq("cliente_id", id)
-    .order("criado_em", { ascending: false })
-    .returns<Pick<Interacao, "id" | "descricao" | "criado_em">[]>();
+  const interacoes = await prisma.interacao.findMany({
+    where: { clienteId: id },
+    orderBy: { criadoEm: "desc" },
+    select: { id: true, descricao: true, criadoEm: true },
+  });
 
   const atualizarComId = atualizarCliente.bind(null, id);
   const adicionarInteracaoComId = adicionarInteracao.bind(null, id);
@@ -66,15 +57,15 @@ export default async function ClienteDetalhePage({
         </form>
 
         <div className="divide-y divide-black/10 rounded border border-black/10 dark:divide-white/10 dark:border-white/10">
-          {interacoes?.length === 0 && (
+          {interacoes.length === 0 && (
             <p className="p-4 text-sm text-black/60 dark:text-white/60">
               Nenhuma interação registrada ainda.
             </p>
           )}
-          {interacoes?.map((interacao) => (
+          {interacoes.map((interacao) => (
             <div key={interacao.id} className="p-4 text-sm">
               <p className="mb-1 text-xs text-black/50 dark:text-white/50">
-                {new Date(interacao.criado_em).toLocaleString("pt-BR")}
+                {new Date(interacao.criadoEm).toLocaleString("pt-BR")}
               </p>
               <p>{interacao.descricao}</p>
             </div>
