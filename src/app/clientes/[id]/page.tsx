@@ -28,6 +28,22 @@ export default async function ClienteDetalhePage({
     select: { id: true, descricao: true, criadoEm: true },
   });
 
+  const erros = await prisma.erroLog.findMany({
+    where: { clienteId: clienteIdNumerico },
+    orderBy: { criadoEm: "desc" },
+    take: 50,
+    select: {
+      id: true,
+      mensagem: true,
+      detalheTecnico: true,
+      tela: true,
+      tipo: true,
+      usuario: true,
+      ocorridoEm: true,
+      criadoEm: true,
+    },
+  });
+
   const atualizarComId = atualizarCliente.bind(null, id);
   const adicionarInteracaoComId = adicionarInteracao.bind(null, id);
 
@@ -97,6 +113,42 @@ export default async function ClienteDetalhePage({
                 {new Date(interacao.criadoEm).toLocaleString("pt-BR")}
               </p>
               <p>{interacao.descricao}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-neutral-900">
+        <h2 className="mb-4 text-lg font-semibold">Erros do sistema</h2>
+
+        <div className="divide-y divide-black/10 rounded-lg border border-black/10 dark:divide-white/10 dark:border-white/10">
+          {erros.length === 0 && (
+            <p className="p-4 text-sm text-black/60 dark:text-white/60">
+              Nenhum erro registrado para este cliente.
+            </p>
+          )}
+          {erros.map((erro) => (
+            <div key={erro.id} className="p-4 text-sm">
+              <div className="mb-1 flex items-center justify-between gap-3">
+                <p className="text-xs text-black/50 dark:text-white/50">
+                  {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR")}
+                  {erro.tela ? ` · ${erro.tela}` : ""}
+                </p>
+                {erro.tipo && (
+                  <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600 dark:text-red-400">
+                    {erro.tipo}
+                  </span>
+                )}
+              </div>
+              <p className="font-medium">{erro.mensagem}</p>
+              {erro.detalheTecnico && (
+                <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-lg bg-black/5 p-3 text-xs text-black/70 dark:bg-white/5 dark:text-white/70">
+                  {erro.detalheTecnico}
+                </pre>
+              )}
+              {erro.usuario && (
+                <p className="mt-2 text-xs text-black/50 dark:text-white/50">Usuário: {erro.usuario}</p>
+              )}
             </div>
           ))}
         </div>
