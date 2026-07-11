@@ -22,6 +22,7 @@ function parseFormData(formData: FormData) {
     status: String(formData.get("status") ?? "ativo") as StatusCliente,
     modulos: formData.getAll("modulos") as ModuloSistema[],
     dataInicio: dataInicio ? new Date(dataInicio) : null,
+    senhaSupabase: String(formData.get("senha_supabase") ?? "").trim() || null,
     observacoes: String(formData.get("observacoes") ?? "").trim() || null,
   };
 }

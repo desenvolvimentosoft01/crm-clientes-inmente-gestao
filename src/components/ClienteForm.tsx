@@ -73,6 +73,12 @@ export function ClienteForm({
         type="date"
         defaultValue={dataInicio}
       />
+      <Campo
+        label="Senha do Supabase"
+        name="senha_supabase"
+        type="password"
+        defaultValue={cliente?.senhaSupabase ?? ""}
+      />
 
       <div className="space-y-1">
         <label htmlFor="status" className="text-sm font-medium">

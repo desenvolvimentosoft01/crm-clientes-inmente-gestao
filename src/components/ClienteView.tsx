@@ -2,6 +2,7 @@ import type { Cliente } from "@prisma/client";
 import { STATUS_OPCOES } from "@/components/StatusBadge";
 import { PLANO_OPCOES, MODULO_OPCOES } from "@/lib/opcoes";
 import { normalizarUrl } from "@/lib/url";
+import { SenhaVisivel } from "@/components/SenhaVisivel";
 
 export function ClienteView({ cliente }: { cliente: Cliente }) {
   const statusLabel =
@@ -49,6 +50,10 @@ export function ClienteView({ cliente }: { cliente: Cliente }) {
         }
       />
       <Campo label="Status" valor={statusLabel} />
+      <Campo
+        label="Senha do Supabase"
+        valor={cliente.senhaSupabase ? <SenhaVisivel senha={cliente.senhaSupabase} /> : undefined}
+      />
       <div className="sm:col-span-2">
         <Campo label="Observações" valor={cliente.observacoes} />
       </div>
