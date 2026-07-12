@@ -5,7 +5,7 @@ import { ClienteForm } from "@/components/ClienteForm";
 import { ClienteView } from "@/components/ClienteView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LinkBotao } from "@/components/Botao";
-import { ErroCard } from "@/components/ErroCard";
+import { ErroLinha } from "@/components/ErroCard";
 import { atualizarCliente, adicionarInteracao } from "@/app/clientes/actions";
 import { hojeSP, limitesDoDiaSP } from "@/lib/data";
 
@@ -58,7 +58,10 @@ export default async function ClienteDetalhePage({
     prisma.erroLog.findMany({
       where: {
         clienteId: clienteIdNumerico,
-        ...(filtroLimites ? { criadoEm: { gte: filtroLimites.inicio, lte: filtroLimites.fim } } : {}),
+        // sem filtro, exclui os de hoje (ja aparecem fixados na seção "Hoje" acima)
+        criadoEm: filtroLimites
+          ? { gte: filtroLimites.inicio, lte: filtroLimites.fim }
+          : { lt: inicioHoje },
       },
       orderBy: { criadoEm: "desc" },
       take: filtroLimites ? undefined : 50,
@@ -229,20 +232,7 @@ export default async function ClienteDetalhePage({
             <>
               <h2 className="mb-4 text-lg font-semibold">Erros do sistema</h2>
 
-              {errosHoje.length > 0 && (
-                <div className="mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-                    Hoje ({errosHoje.length})
-                  </p>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {errosHoje.map((erro) => (
-                      <ErroCard key={erro.id} erro={erro} />
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <form className="mb-4 flex items-end gap-2" action={`/clientes/${id}`}>
+              <form className="mb-6 flex items-end gap-2" action={`/clientes/${id}`}>
                 <input type="hidden" name="aba" value="erros" />
                 <label className="text-sm">
                   <span className="mb-1 block text-xs text-black/60 dark:text-white/60">Filtrar por data</span>
@@ -259,21 +249,39 @@ export default async function ClienteDetalhePage({
                 >
                   Filtrar
                 </button>
-                {filtroAtivo && (
-                  <LinkBotao href={`/clientes/${id}?aba=erros`} variante="fantasma">
-                    Limpar filtro
-                  </LinkBotao>
-                )}
+                <LinkBotao href={`/clientes/${id}?aba=erros`} variante="fantasma">
+                  Limpar filtro
+                </LinkBotao>
               </form>
 
+              {errosHoje.length > 0 && (
+                <div className="mb-6 overflow-hidden rounded-lg border border-amber-500/30">
+                  <p className="bg-amber-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                    Hoje ({errosHoje.length})
+                  </p>
+                  <div className="divide-y divide-black/10 dark:divide-white/10">
+                    {errosHoje.map((erro) => (
+                      <ErroLinha key={erro.id} erro={erro} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-black/50 dark:text-white/50">
+                {filtroAtivo ? `Erros em ${new Date(dataErros!).toLocaleDateString("pt-BR")}` : "Erros anteriores"}
+              </p>
               {errosFiltrados.length === 0 ? (
                 <p className="rounded-lg border border-black/10 p-4 text-sm text-black/60 dark:border-white/10 dark:text-white/60">
-                  {filtroAtivo ? "Nenhum erro nessa data." : "Nenhum erro registrado para este cliente."}
+                  {filtroAtivo
+                    ? "Nenhum erro nessa data."
+                    : errosHoje.length > 0
+                      ? "Nenhum outro erro registrado além dos de hoje."
+                      : "Nenhum erro registrado para este cliente."}
                 </p>
               ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="divide-y divide-black/10 overflow-hidden rounded-lg border border-black/10 dark:divide-white/10 dark:border-white/10">
                   {errosFiltrados.map((erro) => (
-                    <ErroCard key={erro.id} erro={erro} />
+                    <ErroLinha key={erro.id} erro={erro} />
                   ))}
                 </div>
               )}
