@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { extrairHostname } from "@/lib/url";
+import { notificarErro } from "@/lib/push";
 
 export async function POST(req: Request) {
   const apiKey = req.headers.get("x-api-key");
@@ -16,14 +17,18 @@ export async function POST(req: Request) {
   }
 
   let clienteId: number | null = null;
+  let clienteNome = clienteSite ?? "cliente desconhecido";
   const hostname = clienteSite ? extrairHostname(clienteSite) : null;
   if (hostname) {
     const clientes = await prisma.cliente.findMany({
       where: { linkSite: { not: null } },
-      select: { id: true, linkSite: true },
+      select: { id: true, nome: true, linkSite: true },
     });
     const cliente = clientes.find((c) => extrairHostname(c.linkSite!) === hostname);
-    clienteId = cliente?.id ?? null;
+    if (cliente) {
+      clienteId = cliente.id;
+      clienteNome = cliente.nome;
+    }
   }
 
   const ocorridoEmRaw = body.quando ?? body.ocorridoEm;
@@ -41,6 +46,8 @@ export async function POST(req: Request) {
       ocorridoEm: ocorridoEm && !Number.isNaN(ocorridoEm.getTime()) ? ocorridoEm : null,
     },
   });
+
+  notificarErro({ clienteNome, mensagem, clienteId }).catch(() => {});
 
   return NextResponse.json({ ok: true, vinculadoAoCliente: clienteId !== null });
 }

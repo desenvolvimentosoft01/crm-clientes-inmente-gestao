@@ -8,8 +8,9 @@ export default auth((req) => {
   const isLoginRoute = req.nextUrl.pathname.startsWith("/login");
   const isApiAuthRoute = req.nextUrl.pathname.startsWith("/api/auth");
   const isApiErrosRoute = req.nextUrl.pathname.startsWith("/api/erros");
+  const isServiceWorker = req.nextUrl.pathname === "/sw.js";
 
-  if (isApiAuthRoute || isApiErrosRoute) return NextResponse.next();
+  if (isApiAuthRoute || isApiErrosRoute || isServiceWorker) return NextResponse.next();
 
   if (!req.auth && !isLoginRoute) {
     const url = req.nextUrl.clone();

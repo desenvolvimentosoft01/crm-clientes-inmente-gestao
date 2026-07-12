@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import { sair } from "@/app/login/actions";
+import { AtivarNotificacoes } from "@/components/AtivarNotificacoes";
 
 export async function NavBar() {
   const session = await auth();
@@ -13,6 +14,7 @@ export async function NavBar() {
         CRM In Mente
       </Link>
       <div className="flex items-center gap-4 text-sm">
+        <AtivarNotificacoes />
         <span className="text-black/60 dark:text-white/60">{session.user.email}</span>
         <form action={sair}>
           <button type="submit" className="underline underline-offset-2">
