@@ -1,5 +1,7 @@
 const FUSO_SP = "America/Sao_Paulo";
 
+export const TIPOS_ERRO_CRITICO = ["Erro de JavaScript não tratado", "Falha interna não tratada"] as const;
+
 export function hojeSP(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: FUSO_SP });
 }

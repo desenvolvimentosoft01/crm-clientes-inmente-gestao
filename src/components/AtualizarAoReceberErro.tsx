@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-export function AtualizarAoReceberErro({ clienteId }: { clienteId: number }) {
+export function AtualizarAoReceberErro({ clienteId }: { clienteId: number | "todos" }) {
   const router = useRouter();
 
   useEffect(() => {
@@ -11,7 +11,7 @@ export function AtualizarAoReceberErro({ clienteId }: { clienteId: number }) {
 
     function aoReceberMensagem(event: MessageEvent) {
       if (event.data?.tipo !== "novo-erro") return;
-      if (event.data.clienteId !== null && event.data.clienteId !== clienteId) return;
+      if (clienteId !== "todos" && event.data.clienteId !== null && event.data.clienteId !== clienteId) return;
       router.refresh();
     }
 
