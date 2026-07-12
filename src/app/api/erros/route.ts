@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { extrairHostname } from "@/lib/url";
 import { notificarErro } from "@/lib/push";
+import { gerarDiagnostico } from "@/lib/diagnostico";
 
 export async function POST(req: Request) {
   const apiKey = req.headers.get("x-api-key");
@@ -34,20 +35,27 @@ export async function POST(req: Request) {
   const ocorridoEmRaw = body.quando ?? body.ocorridoEm;
   const ocorridoEm = ocorridoEmRaw ? new Date(ocorridoEmRaw) : null;
 
-  await prisma.erroLog.create({
+  const detalheTecnico = body.detalheTecnico ? String(body.detalheTecnico) : null;
+  const tela = body.tela ? String(body.tela) : null;
+  const tipo = body.tipo ? String(body.tipo) : null;
+
+  const erroCriado = await prisma.erroLog.create({
     data: {
       clienteId,
       clienteSite,
       mensagem,
-      detalheTecnico: body.detalheTecnico ? String(body.detalheTecnico) : null,
-      tela: body.tela ? String(body.tela) : null,
-      tipo: body.tipo ? String(body.tipo) : null,
+      detalheTecnico,
+      tela,
+      tipo,
       usuario: body.usuario ? String(body.usuario) : null,
       ocorridoEm: ocorridoEm && !Number.isNaN(ocorridoEm.getTime()) ? ocorridoEm : null,
     },
   });
 
   notificarErro({ clienteNome, mensagem, clienteId }).catch((e) => console.error("[push] erro inesperado", e));
+  gerarDiagnostico(erroCriado.id, { mensagem, detalheTecnico, tela, tipo }).catch((e) =>
+    console.error("[diagnostico] erro inesperado", e)
+  );
 
   return NextResponse.json({ ok: true, vinculadoAoCliente: clienteId !== null });
 }

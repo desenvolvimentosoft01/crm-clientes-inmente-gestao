@@ -17,6 +17,7 @@ const SELECT_ERRO = {
   tela: true,
   tipo: true,
   usuario: true,
+  diagnostico: true,
   ocorridoEm: true,
   criadoEm: true,
 } as const;

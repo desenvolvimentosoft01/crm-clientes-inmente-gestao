@@ -5,6 +5,7 @@ type Erro = {
   tela: string | null;
   tipo: string | null;
   usuario: string | null;
+  diagnostico?: string | null;
   ocorridoEm: Date | null;
   criadoEm: Date;
 };
@@ -19,6 +20,19 @@ export function ErroLinha({ erro }: { erro: Erro }) {
               ⚠️
             </span>
             {erro.mensagem}
+            {erro.diagnostico && (
+              <details className="ml-1 inline-block align-middle">
+                <summary
+                  className="inline-flex cursor-pointer list-none select-none rounded-full px-1 text-base leading-none hover:bg-black/5 dark:hover:bg-white/10"
+                  title="Ver diagnóstico"
+                >
+                  💬
+                </summary>
+                <div className="mt-2 max-w-prose rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs font-normal text-blue-900 dark:text-blue-200">
+                  {erro.diagnostico}
+                </div>
+              </details>
+            )}
           </p>
           <p className="mt-1 text-xs text-black/50 dark:text-white/50">
             {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR", {
