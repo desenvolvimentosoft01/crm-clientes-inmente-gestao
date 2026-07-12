@@ -4,17 +4,30 @@ import { ClienteForm } from "@/components/ClienteForm";
 import { ClienteView } from "@/components/ClienteView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LinkBotao } from "@/components/Botao";
+import { ErroCard } from "@/components/ErroCard";
 import { atualizarCliente, adicionarInteracao } from "@/app/clientes/actions";
+import { hojeSP, limitesDoDiaSP } from "@/lib/data";
+
+const SELECT_ERRO = {
+  id: true,
+  mensagem: true,
+  detalheTecnico: true,
+  tela: true,
+  tipo: true,
+  usuario: true,
+  ocorridoEm: true,
+  criadoEm: true,
+} as const;
 
 export default async function ClienteDetalhePage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string; editar?: string }>;
+  searchParams: Promise<{ erro?: string; editar?: string; dataErros?: string }>;
 }) {
   const { id } = await params;
-  const { erro, editar } = await searchParams;
+  const { erro, editar, dataErros } = await searchParams;
   const emEdicao = editar === "1";
   const clienteIdNumerico = Number(id);
   if (!Number.isInteger(clienteIdNumerico)) notFound();
@@ -28,21 +41,28 @@ export default async function ClienteDetalhePage({
     select: { id: true, descricao: true, criadoEm: true },
   });
 
-  const erros = await prisma.erroLog.findMany({
-    where: { clienteId: clienteIdNumerico },
-    orderBy: { criadoEm: "desc" },
-    take: 50,
-    select: {
-      id: true,
-      mensagem: true,
-      detalheTecnico: true,
-      tela: true,
-      tipo: true,
-      usuario: true,
-      ocorridoEm: true,
-      criadoEm: true,
-    },
-  });
+  const hoje = hojeSP();
+  const { inicio: inicioHoje, fim: fimHoje } = limitesDoDiaSP(hoje);
+  const filtroAtivo = !!dataErros && dataErros !== hoje;
+
+  const filtroLimites = filtroAtivo ? limitesDoDiaSP(dataErros!) : null;
+
+  const [errosHoje, errosFiltrados] = await Promise.all([
+    prisma.erroLog.findMany({
+      where: { clienteId: clienteIdNumerico, criadoEm: { gte: inicioHoje, lte: fimHoje } },
+      orderBy: { criadoEm: "desc" },
+      select: SELECT_ERRO,
+    }),
+    prisma.erroLog.findMany({
+      where: {
+        clienteId: clienteIdNumerico,
+        ...(filtroLimites ? { criadoEm: { gte: filtroLimites.inicio, lte: filtroLimites.fim } } : {}),
+      },
+      orderBy: { criadoEm: "desc" },
+      take: filtroLimites ? undefined : 50,
+      select: SELECT_ERRO,
+    }),
+  ]);
 
   const atualizarComId = atualizarCliente.bind(null, id);
   const adicionarInteracaoComId = adicionarInteracao.bind(null, id);
@@ -121,39 +141,54 @@ export default async function ClienteDetalhePage({
       <section className="rounded-xl border border-black/10 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-neutral-900">
         <h2 className="mb-4 text-lg font-semibold">Erros do sistema</h2>
 
-        <div className="divide-y divide-black/10 rounded-lg border border-black/10 dark:divide-white/10 dark:border-white/10">
-          {erros.length === 0 && (
-            <p className="p-4 text-sm text-black/60 dark:text-white/60">
-              Nenhum erro registrado para este cliente.
+        {errosHoje.length > 0 && (
+          <div className="sticky top-0 z-10 mb-6 -mx-6 -mt-1 border-b border-black/10 bg-amber-500/10 px-6 pb-4 pt-1 backdrop-blur dark:border-white/10">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+              Hoje ({errosHoje.length})
             </p>
-          )}
-          {erros.map((erro) => (
-            <div key={erro.id} className="p-4 text-sm">
-              <div className="mb-1 flex items-center justify-between gap-3">
-                <p className="text-xs text-black/50 dark:text-white/50">
-                  {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR", {
-                    timeZone: "America/Sao_Paulo",
-                  })}
-                  {erro.tela ? ` · ${erro.tela}` : ""}
-                </p>
-                {erro.tipo && (
-                  <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs text-red-600 dark:text-red-400">
-                    {erro.tipo}
-                  </span>
-                )}
-              </div>
-              <p className="font-medium">{erro.mensagem}</p>
-              {erro.detalheTecnico && (
-                <pre className="mt-2 overflow-x-auto whitespace-pre-wrap rounded-lg bg-black/5 p-3 text-xs text-black/70 dark:bg-white/5 dark:text-white/70">
-                  {erro.detalheTecnico}
-                </pre>
-              )}
-              {erro.usuario && (
-                <p className="mt-2 text-xs text-black/50 dark:text-white/50">Usuário: {erro.usuario}</p>
-              )}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {errosHoje.map((erro) => (
+                <ErroCard key={erro.id} erro={erro} />
+              ))}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        <form className="mb-4 flex items-end gap-2" action={`/clientes/${id}`}>
+          <input type="hidden" name="editar" value={editar ?? ""} />
+          <label className="text-sm">
+            <span className="mb-1 block text-xs text-black/60 dark:text-white/60">Filtrar por data</span>
+            <input
+              type="date"
+              name="dataErros"
+              defaultValue={dataErros ?? ""}
+              className="rounded-lg border border-black/15 px-3 py-2 text-sm dark:border-white/15 dark:bg-transparent"
+            />
+          </label>
+          <button
+            type="submit"
+            className="rounded-lg border border-black/15 px-4 py-2 text-sm font-medium hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/10"
+          >
+            Filtrar
+          </button>
+          {filtroAtivo && (
+            <LinkBotao href={`/clientes/${id}`} variante="fantasma">
+              Limpar filtro
+            </LinkBotao>
+          )}
+        </form>
+
+        {errosFiltrados.length === 0 ? (
+          <p className="rounded-lg border border-black/10 p-4 text-sm text-black/60 dark:border-white/10 dark:text-white/60">
+            {filtroAtivo ? "Nenhum erro nessa data." : "Nenhum erro registrado para este cliente."}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {errosFiltrados.map((erro) => (
+              <ErroCard key={erro.id} erro={erro} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
