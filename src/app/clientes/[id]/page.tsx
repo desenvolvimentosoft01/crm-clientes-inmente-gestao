@@ -6,6 +6,7 @@ import { ClienteView } from "@/components/ClienteView";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LinkBotao } from "@/components/Botao";
 import { ErroLinha } from "@/components/ErroCard";
+import { AtualizarAoReceberErro } from "@/components/AtualizarAoReceberErro";
 import { atualizarCliente, adicionarInteracao } from "@/app/clientes/actions";
 import { hojeSP, limitesDoDiaSP } from "@/lib/data";
 
@@ -82,6 +83,7 @@ export default async function ClienteDetalhePage({
 
   return (
     <div className="mx-auto w-full max-w-6xl flex-1 space-y-6 p-6">
+      <AtualizarAoReceberErro clienteId={clienteIdNumerico} />
       <div>
         <LinkBotao href="/clientes" variante="fantasma" className="mb-3 px-0">
           ← Voltar para clientes

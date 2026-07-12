@@ -24,6 +24,7 @@ export async function notificarErro(erro: { clienteNome: string; mensagem: strin
     titulo: `⚠️ Erro em ${erro.clienteNome}`,
     corpo: erro.mensagem.slice(0, 150),
     url: erro.clienteId ? `/clientes/${erro.clienteId}` : "/clientes",
+    clienteId: erro.clienteId,
   });
 
   await Promise.all(

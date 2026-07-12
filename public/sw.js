@@ -3,11 +3,16 @@ self.addEventListener("push", (event) => {
   const titulo = dados.titulo ?? "Novo erro no sistema";
 
   event.waitUntil(
-    self.registration.showNotification(titulo, {
-      body: dados.corpo ?? "",
-      icon: "/favicon.ico",
-      data: { url: dados.url ?? "/clientes" },
-    })
+    Promise.all([
+      self.registration.showNotification(titulo, {
+        body: dados.corpo ?? "",
+        icon: "/favicon.ico",
+        data: { url: dados.url ?? "/clientes" },
+      }),
+      self.clients.matchAll({ type: "window" }).then((abas) => {
+        abas.forEach((aba) => aba.postMessage({ tipo: "novo-erro", clienteId: dados.clienteId ?? null }));
+      }),
+    ])
   );
 });
 
