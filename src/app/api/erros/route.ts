@@ -47,7 +47,7 @@ export async function POST(req: Request) {
     },
   });
 
-  notificarErro({ clienteNome, mensagem, clienteId }).catch(() => {});
+  notificarErro({ clienteNome, mensagem, clienteId }).catch((e) => console.error("[push] erro inesperado", e));
 
   return NextResponse.json({ ok: true, vinculadoAoCliente: clienteId !== null });
 }

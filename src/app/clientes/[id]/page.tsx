@@ -131,7 +131,9 @@ export default async function ClienteDetalhePage({
             <div key={erro.id} className="p-4 text-sm">
               <div className="mb-1 flex items-center justify-between gap-3">
                 <p className="text-xs text-black/50 dark:text-white/50">
-                  {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR")}
+                  {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR", {
+                    timeZone: "America/Sao_Paulo",
+                  })}
                   {erro.tela ? ` · ${erro.tela}` : ""}
                 </p>
                 {erro.tipo && (

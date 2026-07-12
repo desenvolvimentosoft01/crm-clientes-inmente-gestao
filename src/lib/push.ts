@@ -9,10 +9,16 @@ if (vapidPublicKey && vapidPrivateKey) {
 }
 
 export async function notificarErro(erro: { clienteNome: string; mensagem: string; clienteId: number | null }) {
-  if (!vapidPublicKey || !vapidPrivateKey) return;
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    console.error("[push] VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY não configuradas, notificação não enviada");
+    return;
+  }
 
   const inscricoes = await prisma.pushSubscription.findMany();
-  if (inscricoes.length === 0) return;
+  if (inscricoes.length === 0) {
+    console.error("[push] nenhuma inscrição encontrada, notificação não enviada");
+    return;
+  }
 
   const payload = JSON.stringify({
     titulo: `⚠️ Erro em ${erro.clienteNome}`,
@@ -32,6 +38,8 @@ export async function notificarErro(erro: { clienteNome: string; mensagem: strin
         );
       } catch (erroEnvio: unknown) {
         const statusCode = (erroEnvio as { statusCode?: number }).statusCode;
+        const body = (erroEnvio as { body?: string }).body;
+        console.error("[push] falha ao enviar notificação", statusCode, body);
         if (statusCode === 404 || statusCode === 410) {
           await prisma.pushSubscription.delete({ where: { id: inscricao.id } }).catch(() => {});
         }
