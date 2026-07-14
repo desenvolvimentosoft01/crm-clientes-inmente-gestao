@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { TIPOS_ERRO_CRITICO } from "@/lib/data";
 import { AtualizarAoReceberErro } from "@/components/AtualizarAoReceberErro";
+import { ErroLinha } from "@/components/ErroCard";
 
 export default async function ErrosCriticosPage() {
   const erros = await prisma.erroLog.findMany({
@@ -16,6 +17,7 @@ export default async function ErrosCriticosPage() {
       tipo: true,
       usuario: true,
       diagnostico: true,
+      resolvido: true,
       ocorridoEm: true,
       criadoEm: true,
       cliente: { select: { id: true, nome: true } },
@@ -40,62 +42,22 @@ export default async function ErrosCriticosPage() {
       ) : (
         <div className="divide-y divide-black/10 overflow-hidden rounded-xl border border-black/10 bg-white shadow-sm dark:divide-white/10 dark:border-white/10 dark:bg-neutral-900">
           {erros.map((erro) => (
-            <div key={erro.id} className="border-l-4 border-l-red-500 bg-black/[0.02] p-4 text-sm dark:bg-white/[0.02]">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
-                    {erro.cliente ? (
-                      <Link
-                        href={`/clientes/${erro.cliente.id}?aba=erros`}
-                        className="font-semibold underline underline-offset-2 hover:no-underline"
-                      >
-                        {erro.cliente.nome}
-                      </Link>
-                    ) : (
-                      <span className="font-semibold text-black/50 dark:text-white/50">Cliente não identificado</span>
-                    )}
-                    <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
-                      {erro.tipo}
-                    </span>
-                  </div>
-                  <p className="font-medium leading-snug">
-                    <span aria-hidden className="mr-1">
-                      ⚠️
-                    </span>
-                    {erro.mensagem}
-                    {erro.diagnostico && (
-                      <details className="ml-1 inline-block align-middle">
-                        <summary
-                          className="inline-flex cursor-pointer list-none select-none rounded-full px-1 text-base leading-none hover:bg-black/5 dark:hover:bg-white/10"
-                          title="Ver diagnóstico"
-                        >
-                          💬
-                        </summary>
-                        <div className="mt-2 max-w-prose rounded-lg border border-blue-500/30 bg-blue-500/10 p-3 text-xs font-normal text-blue-900 dark:text-blue-200">
-                          {erro.diagnostico}
-                        </div>
-                      </details>
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-black/50 dark:text-white/50">
-                    {new Date(erro.ocorridoEm ?? erro.criadoEm).toLocaleString("pt-BR", {
-                      timeZone: "America/Sao_Paulo",
-                    })}
-                    {erro.tela ? ` · ${erro.tela}` : ""}
-                    {erro.usuario ? ` · ${erro.usuario}` : ""}
-                  </p>
-                </div>
+            <div key={erro.id}>
+              <div className="border-l-4 border-l-red-500 bg-black/[0.02] px-4 pt-3 dark:bg-white/[0.02]">
+                {erro.cliente ? (
+                  <Link
+                    href={`/clientes/${erro.cliente.id}?aba=erros`}
+                    className="text-sm font-semibold underline underline-offset-2 hover:no-underline"
+                  >
+                    {erro.cliente.nome}
+                  </Link>
+                ) : (
+                  <span className="text-sm font-semibold text-black/50 dark:text-white/50">
+                    Cliente não identificado
+                  </span>
+                )}
               </div>
-              {erro.detalheTecnico && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer text-xs text-black/50 hover:text-black dark:text-white/50 dark:hover:text-white">
-                    Detalhe técnico
-                  </summary>
-                  <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap rounded-lg bg-black/5 p-3 text-xs text-black/70 dark:bg-white/5 dark:text-white/70">
-                    {erro.detalheTecnico}
-                  </pre>
-                </details>
-              )}
+              <ErroLinha erro={erro} />
             </div>
           ))}
         </div>

@@ -18,6 +18,7 @@ const SELECT_ERRO = {
   tipo: true,
   usuario: true,
   diagnostico: true,
+  resolvido: true,
   ocorridoEm: true,
   criadoEm: true,
 } as const;
