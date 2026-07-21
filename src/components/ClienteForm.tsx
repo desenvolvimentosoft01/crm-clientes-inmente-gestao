@@ -1,6 +1,6 @@
 import { STATUS_OPCOES } from "@/components/StatusBadge";
 import { Botao, LinkBotao } from "@/components/Botao";
-import { PLANO_OPCOES, MODULO_OPCOES } from "@/lib/opcoes";
+import { PLANO_OPCOES, MODULO_OPCOES, PLANO_SISTEMA_OPCOES } from "@/lib/opcoes";
 import type { Cliente } from "@prisma/client";
 
 export function ClienteForm({
@@ -50,6 +50,27 @@ export function ClienteForm({
             Sem plano
           </option>
           {PLANO_OPCOES.map((opcao) => (
+            <option
+              key={opcao.value}
+              value={opcao.value}
+              className="bg-white text-black dark:bg-neutral-800 dark:text-white"
+            >
+              {opcao.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1">
+        <label htmlFor="plano_sistema" className="text-sm font-medium">
+          Plano do sistema
+        </label>
+        <select
+          id="plano_sistema"
+          name="plano_sistema"
+          defaultValue={cliente?.planoSistema ?? "basico"}
+          className="w-full rounded-lg border border-black/15 bg-white px-3 py-2 text-sm text-foreground dark:border-white/15 dark:bg-neutral-800"
+        >
+          {PLANO_SISTEMA_OPCOES.map((opcao) => (
             <option
               key={opcao.value}
               value={opcao.value}

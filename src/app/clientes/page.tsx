@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { StatusBadge } from "@/components/StatusBadge";
 import { LinkBotao } from "@/components/Botao";
-import { PLANO_OPCOES } from "@/lib/opcoes";
+import { PLANO_OPCOES, PLANO_SISTEMA_OPCOES } from "@/lib/opcoes";
 import type { StatusCliente } from "@prisma/client";
 
 export default async function ClientesPage({
@@ -18,7 +18,7 @@ export default async function ClientesPage({
       ...(status ? { status } : {}),
     },
     orderBy: { nome: "asc" },
-    select: { id: true, nome: true, plano: true, valorMensal: true, status: true },
+    select: { id: true, nome: true, plano: true, planoSistema: true, valorMensal: true, status: true },
   });
 
   return (
@@ -96,6 +96,9 @@ export default async function ClientesPage({
                 {cliente.valorMensal
                   ? ` · R$ ${cliente.valorMensal.toFixed(2)}/mês`
                   : ""}
+                {" · "}
+                {PLANO_SISTEMA_OPCOES.find((opcao) => opcao.value === cliente.planoSistema)
+                  ?.label ?? cliente.planoSistema}
               </p>
             </div>
             <StatusBadge status={cliente.status} />

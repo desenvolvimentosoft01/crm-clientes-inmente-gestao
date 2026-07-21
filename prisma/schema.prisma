@@ -19,6 +19,15 @@ enum ModuloSistema {
   orcamentos
 }
 
+// Plano do sistema In Mente Gestão (limites de usuários/produtos/vendas do
+// próprio ERP, ver lib/planos.ts no repo do sistema) — não confundir com
+// PlanoContrato abaixo, que é sobre a cobrança (free/mensal/anual).
+enum PlanoSistema {
+  basico
+  intermediario
+  avancado
+}
+
 enum PlanoContrato {
   free
   mensal
@@ -46,6 +55,7 @@ model Cliente {
   contatoTelefone  String?       @map("contato_telefone")
   contatoEmail     String?       @map("contato_email")
   plano            PlanoContrato?
+  planoSistema     PlanoSistema  @default(basico) @map("plano_sistema")
   valorMensal      Decimal?      @map("valor_mensal") @db.Decimal(10, 2)
   status           StatusCliente @default(ativo)
   modulos          ModuloSistema[]

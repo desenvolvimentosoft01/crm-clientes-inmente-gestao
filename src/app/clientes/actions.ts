@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { Prisma, type ModuloSistema, type PlanoContrato, type StatusCliente } from "@prisma/client";
+import { Prisma, type ModuloSistema, type PlanoContrato, type PlanoSistema, type StatusCliente } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
@@ -18,6 +18,7 @@ function parseFormData(formData: FormData) {
     contatoTelefone: String(formData.get("contato_telefone") ?? "").trim() || null,
     contatoEmail: String(formData.get("contato_email") ?? "").trim() || null,
     plano: (plano || null) as PlanoContrato | null,
+    planoSistema: String(formData.get("plano_sistema") ?? "basico") as PlanoSistema,
     valorMensal: valorMensal ? new Prisma.Decimal(valorMensal) : null,
     status: String(formData.get("status") ?? "ativo") as StatusCliente,
     modulos: formData.getAll("modulos") as ModuloSistema[],
