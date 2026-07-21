@@ -1,6 +1,6 @@
 import type { Cliente } from "@prisma/client";
 import { STATUS_OPCOES } from "@/components/StatusBadge";
-import { PLANO_OPCOES, MODULO_OPCOES } from "@/lib/opcoes";
+import { PLANO_OPCOES, MODULO_OPCOES, PLANO_SISTEMA_OPCOES } from "@/lib/opcoes";
 import { normalizarUrl } from "@/lib/url";
 import { SenhaVisivel } from "@/components/SenhaVisivel";
 
@@ -13,6 +13,9 @@ export function ClienteView({ cliente }: { cliente: Cliente }) {
   const modulosLabel = cliente.modulos
     .map((modulo) => MODULO_OPCOES.find((opcao) => opcao.value === modulo)?.label ?? modulo)
     .join(", ");
+  const planoSistemaLabel =
+    PLANO_SISTEMA_OPCOES.find((opcao) => opcao.value === cliente.planoSistema)?.label ??
+    cliente.planoSistema;
 
   return (
     <dl className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -36,6 +39,7 @@ export function ClienteView({ cliente }: { cliente: Cliente }) {
       <Campo label="Telefone do contato" valor={cliente.contatoTelefone} />
       <Campo label="E-mail do contato" valor={cliente.contatoEmail} />
       <Campo label="Plano contratado" valor={planoLabel} />
+      <Campo label="Plano do sistema" valor={planoSistemaLabel} />
       <Campo label="Módulos utilizados" valor={modulosLabel || undefined} />
       <Campo
         label="Valor mensal"
